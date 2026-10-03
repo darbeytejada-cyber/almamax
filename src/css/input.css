@@ -1,0 +1,59 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-brand-cream text-brand-charcoal font-sans;
+  }
+}
+
+@layer utilities {
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
+@layer components {
+  .banner-slide {
+    @apply opacity-0 transition-opacity duration-700 ease-in-out pointer-events-none;
+  }
+  .banner-slide.active {
+    @apply opacity-100 pointer-events-auto;
+  }
+  .skeleton {
+    @apply bg-stone-200 animate-shimmer;
+    background-image: linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0) 0,
+      rgba(255, 255, 255, 0.6) 20%,
+      rgba(255, 255, 255, 0) 60%
+    );
+    background-size: 200% 100%;
+    background-repeat: no-repeat;
+  }
+}
+
+#hero-banner {
+  touch-action: pan-y;
+}
+
+.floating-heart {
+  position: absolute;
+  animation: floatHeart 10s linear infinite;
+  font-size: 1.25rem;
+  user-select: none;
+  pointer-events: none;
+  z-index: 10;
+}
+
+@keyframes floatHeart {
+  0% { transform: translateY(100vh) scale(0.5) rotate(-15deg); opacity: 0; }
+  10% { opacity: 0.6; }
+  80% { opacity: 0.6; }
+  100% { transform: translateY(-10vh) scale(1.2) rotate(15deg); opacity: 0; }
+}
