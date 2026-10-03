@@ -11,6 +11,7 @@
   <link href="styles.css" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/browser-image-compression@2.0.1/dist/browser-image-compression.js"></script>
 </head>
 
 <body class="min-h-screen flex flex-col">
@@ -3526,7 +3527,7 @@
       renderImagesPreview();
     }
 
-    // Carga optimizada hacia el bucket existente 'product-images'
+    // Carga optimizada con COMPRESIÓN y WEBP hacia el bucket 'product-images'
     async function handleFileUpload(event) {
       const files = Array.from(event.target.files);
       if (!files.length) return;
@@ -3538,17 +3539,34 @@
       }
 
       const uploadLabel = document.getElementById('upload-label');
-      uploadLabel.innerHTML = `<p class="text-xs font-semibold text-stone-600">Subiendo imágenes...</p>`;
+      uploadLabel.innerHTML = `<p class="text-xs font-semibold text-stone-600">Comprimiendo y subiendo imágenes...</p>`;
+
+      // Opciones agresivas de optimización
+      const compressionOptions = {
+        maxSizeMB: 0.15,          // Peso máximo: 150 KB por imagen
+        maxWidthOrHeight: 1080,   // Resolución máxima
+        useWebWorker: true,
+        fileType: 'image/webp'
+      };
 
       try {
         for (const file of files) {
-          const fileExt = file.name.split('.').pop();
-          const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 7)}.${fileExt}`;
+          // 1. Comprimir la imagen antes de subirla
+          let compressedFile = file;
+          try {
+             compressedFile = await imageCompression(file, compressionOptions);
+          } catch (compressError) {
+             console.warn("Error comprimiendo imagen, se intentará subir original:", compressError);
+          }
 
+          // 2. Generar el nombre de archivo (Forzando la extensión .webp)
+          const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 7)}.webp`;
+
+          // 3. Subir a Supabase con Caché extendida
           const { error } = await supabase.storage
             .from('product-images')
-            .upload(fileName, file, {
-              cacheControl: '3600',
+            .upload(fileName, compressedFile, {
+              cacheControl: '31536000', // Cache por 1 AÑO
               upsert: false
             });
 
@@ -3573,7 +3591,6 @@
             <p class="text-[10px] text-stone-400">Puedes seleccionar hasta 3 fotos a la vez</p>
           </div>
         `;
-        // REINICIO CLAVE: Permite volver a abrir el explorador y seleccionar archivos repetidos si es necesario
         event.target.value = '';
       }
     }
